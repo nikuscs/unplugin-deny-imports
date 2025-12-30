@@ -1,6 +1,6 @@
 {
   "name": "unplugin-deny-imports",
-  "version": "0.1.0",
+  "version": "0.1.1-beta.1",
   "description": "Deny imports with full import trace support for Vite, Bun, Rollup, webpack, and esbuild",
   "type": "module",
   "main": "./dist/index.cjs",
