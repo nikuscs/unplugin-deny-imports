@@ -88,6 +88,8 @@
     "lint": "oxlint src/",
     "lint:fix": "oxlint src/ --fix",
     "check": "bun run typecheck && bun run lint",
+    "test": "vitest run && bun test test/bun.test.ts",
+    "test:watch": "vitest",
     "taze": "bunx taze",
     "release": "bun run check && npx bumpp && git push --follow-tags",
     "prepublishOnly": "bun run check && bun run build"
@@ -132,7 +134,8 @@
     "oxlint": "^0.16.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "vitest": "^4.0.0"
   },
   "peerDependencies": {
     "vite": ">=5.0.0"
