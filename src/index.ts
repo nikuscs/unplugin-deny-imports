@@ -433,9 +433,9 @@ export const unpluginFactory: UnpluginFactory<Options | undefined> = (options = 
         if (!directive) return null
 
         const isServer = options?.ssr ?? false
-        const invalid =
-          (directive === 'use server' && !isServer) ||
-          (directive === 'use client' && isServer)
+        // Only deny "use server" in client bundles
+        // "use client" is valid in SSR - it marks the boundary, not "never run on server"
+        const invalid = directive === 'use server' && !isServer
 
         if (invalid) {
           const env: Env = isServer ? 'server' : 'client'
@@ -451,13 +451,11 @@ export const unpluginFactory: UnpluginFactory<Options | undefined> = (options = 
       const directive = getDirective(code)
       if (!directive) return null
 
-      const invalid =
-        (directive === 'use server' && !isSsrBuild) ||
-        (directive === 'use client' && isSsrBuild)
+      // Only deny "use server" in client bundles
+      const invalid = directive === 'use server' && !isSsrBuild
 
       if (invalid) {
-        const env: Env = isSsrBuild ? 'server' : 'client'
-        deny(directiveError(directive, id, graph.buildTrace(id, maxDepth), env, root))
+        deny(directiveError(directive, id, graph.buildTrace(id, maxDepth), 'client', root))
       }
       return null
     },

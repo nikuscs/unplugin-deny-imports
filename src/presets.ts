@@ -1,17 +1,33 @@
-import type { Pattern } from './index'
+import type { Pattern, Options, EnvOptions } from './index'
 
-/** Preset with required fields for easy spreading */
+/** Preset with required specifiers/files arrays */
 export interface Preset {
-  client: {
-    specifiers: Pattern[]
-    files: Pattern[]
-  }
-  server: {
-    specifiers: Pattern[]
-    files: Pattern[]
-  }
+  client: Required<EnvOptions>
+  server: Required<EnvOptions>
   ignoreImporters: Pattern[]
 }
+
+/** Overrides for extending the default preset */
+export interface PresetOverrides extends Pick<Options, 'client' | 'server' | 'ignoreImporters'> {
+  /** Patterns to remove from the default preset */
+  exclude?: Pattern[]
+}
+
+function patternMatches(pattern: Pattern, exclude: Pattern): boolean {
+  if (typeof pattern === 'string' && typeof exclude === 'string') {
+    return pattern === exclude
+  }
+  if (pattern instanceof RegExp && exclude instanceof RegExp) {
+    return pattern.source === exclude.source && pattern.flags === exclude.flags
+  }
+  return false
+}
+
+function filterPatterns(patterns: Pattern[], exclude: Pattern[]): Pattern[] {
+  if (!exclude.length) return patterns
+  return patterns.filter((p) => !exclude.some((e) => patternMatches(p, e)))
+}
+
 
 /**
  * Default preset covering common server/client boundaries.
@@ -147,7 +163,6 @@ export const defaultPreset: Preset = {
       'bcryptjs',
       'argon2',
       'jsonwebtoken',
-      'jose',
       'passport',
       /^passport-/,
       'lucia',
@@ -195,12 +210,9 @@ export const defaultPreset: Preset = {
       // ========================================
       // Logging & Monitoring
       // ========================================
-      'pino',
-      /^pino-/,
       'winston',
       'bunyan',
       'morgan',
-      'debug',
       '@sentry/node',
       'newrelic',
       'dd-trace',
@@ -223,7 +235,6 @@ export const defaultPreset: Preset = {
       'ws',
       'pusher',
       '@pusher/push-notifications-server',
-      'ably',
 
       // ========================================
       // Process & Environment
@@ -244,26 +255,18 @@ export const defaultPreset: Preset = {
       // ========================================
       // Caching
       // ========================================
-      'keyv',
-      '@keyv/redis',
-      /^@keyv\//,
       'node-cache',
-      'lru-cache',
 
       // ========================================
       // Payments
       // ========================================
       'stripe',
-      '@stripe/stripe-js', // This is client, but stripe is server
       '@lemonsqueezy/lemonsqueezy.js',
       'paddle-sdk',
 
       // ========================================
       // CMS & Content
       // ========================================
-      '@sanity/client',
-      'contentful',
-      '@contentful/rich-text-types',
       'directus',
       '@directus/sdk',
 
@@ -412,12 +415,63 @@ export const defaultPreset: Preset = {
     ],
   },
   ignoreImporters: [
+    // Test files
+    '**/*.test.*',
+    '**/*.spec.*',
+    '**/__tests__/**',
+
     // TanStack Router generated route tree
     '**/routeTree.gen.ts',
     // Generic tree generation files
     '**/*.tree.ts',
     '**/tree.ts',
   ],
+}
+
+/**
+ * Extend the default preset with custom overrides.
+ *
+ * @example
+ * ```ts
+ * import { preset } from 'unplugin-deny-imports/presets'
+ *
+ * denyImports(preset({
+ *   exclude: ['drizzle-orm'],
+ *   client: {
+ *     specifiers: [/@app\/.*\/server$/],
+ *   },
+ * }))
+ * ```
+ */
+export function preset(overrides: PresetOverrides = {}): Preset {
+  const exclude = overrides.exclude ?? []
+
+  return {
+    client: {
+      specifiers: [
+        ...filterPatterns(defaultPreset.client.specifiers, exclude),
+        ...(overrides.client?.specifiers ?? []),
+      ],
+      files: [
+        ...filterPatterns(defaultPreset.client.files, exclude),
+        ...(overrides.client?.files ?? []),
+      ],
+    },
+    server: {
+      specifiers: [
+        ...filterPatterns(defaultPreset.server.specifiers, exclude),
+        ...(overrides.server?.specifiers ?? []),
+      ],
+      files: [
+        ...filterPatterns(defaultPreset.server.files, exclude),
+        ...(overrides.server?.files ?? []),
+      ],
+    },
+    ignoreImporters: [
+      ...filterPatterns(defaultPreset.ignoreImporters, exclude),
+      ...(overrides.ignoreImporters ?? []),
+    ],
+  }
 }
 
 export default defaultPreset

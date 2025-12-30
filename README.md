@@ -84,18 +84,16 @@ export default defineConfig({
 
 ```typescript
 import denyImports from 'unplugin-deny-imports/vite'
-import preset from 'unplugin-deny-imports/presets'
+import { preset } from 'unplugin-deny-imports/presets'
 
 export default defineConfig({
   plugins: [
-    denyImports({
+    denyImports(preset({
+      exclude: ['drizzle-orm'],  // Remove from defaults
       client: {
-        specifiers: [...preset.client.specifiers, /@app\/.*\/server$/],
-        files: preset.client.files,
+        specifiers: [/@app\/.*\/server$/],  // Add to defaults
       },
-      server: preset.server,
-      ignoreImporters: [...preset.ignoreImporters, /\.test\.ts$/],
-    }),
+    })),
   ],
 })
 ```
@@ -141,10 +139,7 @@ The preset blocks common server-only code from client and vice versa:
 
 ## Directive Enforcement
 
-Files with `"use server"` or `"use client"` directives are automatically enforced:
-
-- `"use server"` → Denied in client bundles
-- `"use client"` → Denied in server bundles
+Files with `"use server"` directives are automatically blocked from client bundles:
 
 ```typescript
 // actions.ts
@@ -152,6 +147,8 @@ Files with `"use server"` or `"use client"` directives are automatically enforce
 
 export async function createUser() { ... }
 ```
+
+> **Note:** `"use client"` is NOT enforced - these components are valid in SSR (they mark the React Server Component boundary, not "never run on server").
 
 Disable with:
 
