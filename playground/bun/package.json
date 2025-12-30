@@ -1,0 +1,13 @@
+{
+  "name": "playground-bun",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch build.ts client",
+    "dev:server": "bun --watch build.ts server",
+    "build": "bun run build.ts client",
+    "build:server": "bun run build.ts server"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.1"
+  }
+}
