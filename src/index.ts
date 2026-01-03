@@ -361,7 +361,7 @@ export const unpluginFactory: UnpluginFactory<Options | undefined> = (options = 
         resolving.add(resolveKey)
 
         try {
-          const resolved = await this.resolve(id, importer, { skipSelf: true })
+          const resolved = await this.resolve(id, importer, { skipSelf: true, ...opts })
           const resolvedId = resolved?.id
           if (!resolvedId || !path.isAbsolute(resolvedId)) return null
 
